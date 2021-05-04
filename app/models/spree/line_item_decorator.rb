@@ -7,13 +7,8 @@ module Spree::LineItemDecorator
   #
   # Assumption here is that the volume price currency is the same as the product currency
   
-  def self.prepended(base)
-    old_copy_price = base.instance_method(:copy_price)
-
-    define_method(:copy_price) do
-      old_copy_price.bind(self).call
-      return unless variant
-
+  def copy_price
+    if variant
       if changed? && changes.keys.include?('quantity')
         vprice = variant.volume_price(quantity, order.user)
         if price.present? && vprice <= variant.price
