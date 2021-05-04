@@ -16,7 +16,7 @@ module Spree::VariantDecorator
       Spree::VolumePrice.where(
         (table[:variant_id].eq(id)
           .or(table[:volume_price_model_id].in(volume_price_models.ids)))
-          .and(table[:role_id].eq(user.resolve_role.try(:id)))
+          .and(table[:role_id].eq(nil))
         )
         .order(position: :asc)
     else
