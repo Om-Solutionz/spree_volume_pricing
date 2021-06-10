@@ -11,7 +11,6 @@ module Spree::VariantDecorator
 
   def join_volume_prices(user = nil)
     table = Spree::VolumePrice.arel_table
-
     if user
       Spree::VolumePrice.where(
         (table[:variant_id].eq(id)
@@ -51,23 +50,27 @@ module Spree::VariantDecorator
   end
 
   def compute_volume_price_quantities(type, default_price, quantity, user)
-    volume_prices = join_volume_prices user
-    if volume_prices.count == 0
-      if use_master_variant_volume_pricing?
-        product.master.send(type, quantity, user)
+    if self.volume_pricing
+      volume_prices = join_volume_prices user
+      if volume_prices.count == 0
+        if use_master_variant_volume_pricing?
+          product.master.send(type, quantity, user)
+        else
+          return default_price
+        end
       else
-        return default_price
+        volume_prices.each do |volume_price|
+          if volume_price.include?(quantity)
+            return send "compute_#{type}".to_sym, volume_price
+          end
+        end
+
+        # No price ranges matched.
+        default_price
       end
     else
-      volume_prices.each do |volume_price|
-        if volume_price.include?(quantity)
-          return send "compute_#{type}".to_sym, volume_price
-        end
-      end
-
-      # No price ranges matched.
       default_price
-    end
+    end    
   end
 
   def compute_volume_price(volume_price)
